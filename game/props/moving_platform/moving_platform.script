@@ -1,0 +1,79 @@
+local logger = require "ludobits.m.logger"
+local log = logger.create("[GO]MovingPlatform")
+local MAX_WAYPOINTS = 5
+
+go.property("delay", 0)
+go.property("duration", 3)
+go.property("is_loop", false)
+go.property("is_reversed", false)
+go.property("waypoint01", vmath.vector3())
+go.property("waypoint02", vmath.vector3())
+go.property("waypoint03", vmath.vector3())
+go.property("waypoint04", vmath.vector3())
+go.property("waypoint05", vmath.vector3())
+--
+--
+local nextIndex = function(self)
+	if self.is_loop then
+		-- loop
+		return (self.index + 1) % #self.waypoints + 1
+	else
+		-- ping pong
+		local index
+		
+		if self.is_reversed then
+			-- backward
+			index = self.index - 1
+
+			if index < 1 then
+				index = index + 2
+				self.is_reversed = false
+			end
+		else
+			-- forward
+			index = self.index + 1
+			
+			if index > #self.waypoints then
+				index = index - 2
+				self.is_reversed = true
+			end
+		end
+
+		return index
+	end
+end
+
+local moveToNext
+moveToNext = function(self)
+	local nextIdx = nextIndex(self)
+	local nextPos = self.waypoints[nextIdx]
+
+	go.animate(".", "position",
+		go.PLAYBACK_ONCE_FORWARD,
+		nextPos,
+		go.EASING_LINEAR,
+		self.duration,
+		self.delay,
+		function()
+			self.index = nextIdx
+			
+			moveToNext(self)
+		end)
+end
+--
+--
+function init(self)
+	self.index = 1
+	self.waypoints = {}
+	
+	for i=1, MAX_WAYPOINTS do
+		local v = self["waypoint0"..i]
+		if v.x ~= 0 and v.y ~= 0 then
+			table.insert(self.waypoints, v)
+		end
+	end
+
+	if #self.waypoints > 1 then
+		moveToNext(self)
+	end
+end

@@ -1,0 +1,69 @@
+local broadcast = require "ludobits.m.broadcast"
+
+local logger = require "ludobits.m.logger"
+local log = logger.create("[GO]Player")
+
+local anims     = require "game.utils.animations"
+local events    = require "game.utils.events"
+local eventBus  = require "game.utils.bus"
+local bus       = eventBus.create()
+
+local cc         = require "game.components.component"
+local camera     = require "game.components.camera"
+local animator   = require "game.components.animator"
+local controller = require "game.components.controller"
+local platypus   = require "game.components.platypus"
+local pet        = require "game.components.pet"
+
+go.property("health", 100)
+
+function init(self)
+	bus.listen(function(id, ...)
+		self.cc.on_event(id, ...)
+	end)
+	
+	self.cc = cc.create(
+		controller.create(bus),
+		camera.create(),
+		animator.create("#sprite", bus, {
+			[anims.CLIMB]      = anims.PLAYER_CLIMB,
+			[anims.CRAWL]      = anims.PLAYER_CRAWL,
+			[anims.CROUCH]     = anims.PLAYER_CROUCH,
+			[anims.DASH]       = anims.PLAYER_DASH,
+			[anims.FALL]       = anims.PLAYER_FALL,
+			[anims.FLIP]       = anims.PLAYER_FLIP,
+			[anims.HANG]       = anims.PLAYER_HANG,
+			[anims.IDLE]       = anims.PLAYER_IDLE,
+			[anims.JUMP]       = anims.PLAYER_JUMP,
+			[anims.LAND]       = anims.PLAYER_LAND,
+			[anims.LOOK_UP]    = anims.PLAYER_LOOK_UP,
+			[anims.SLIDE]      = anims.PLAYER_SLIDE,
+			[anims.WALK]       = anims.PLAYER_WALK,
+			[anims.WALL_SLIDE] = anims.PLAYER_WALL_SLIDE,
+		}),
+		platypus.create(bus, {
+			rays = { left = 6, right = 6, top = 20, bottom = 20 }
+		}),
+		pet.create(bus, {
+			width = 12,
+			height = 40
+		})
+	)
+	self.cc.init()
+end
+
+function final(self)
+	self.cc.final()
+end
+
+function update(self, dt)
+	self.cc.update(dt)
+end
+
+function on_message(self, message_id, message, sender)
+	self.cc.on_message(message_id, message, sender)
+end
+
+function on_input(self, action_id, action)
+	self.cc.on_input(action_id, action)
+end

@@ -1,0 +1,13 @@
+local monarch = require "monarch.monarch"
+
+function init(self)
+	monarch.debug()
+	-- msg.post(".", "acquire_input_focus")
+	msg.post("#", "show_01")
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("show_01") then
+		monarch.show(hash("01"))
+	end
+end
